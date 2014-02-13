@@ -4,7 +4,7 @@
 # Public License version 3 (AGPLv3).
 # See LICENCE.txt for details.
 # ###
-"""Upgrades for munging/transforming Connexions XML in place in a workgroup."""
+"""apply an xslt transform to each document"""
 
 from lxml import etree
 
@@ -17,11 +17,13 @@ def cli_command(cnxml,**kwargs):
         xsl=etree.parse(xf).getroot()
         transform=etree.XSLT(xsl)
         xml=etree.XML(cnxml)
-    return str(transform(xml))
+    return unicode(transform(xml)).encode('utf-8')
 
 
 def cli_loader(parser):
     """Used to load the CLI toggles and switches."""
     parser.add_argument('xslt', 
                         help="be converted")
+    parser.add_argument('save_dir_d', metavar="save_dir", nargs="?",
+                        help="directory to save transformed documents to")
     return cli_command

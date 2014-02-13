@@ -21,19 +21,22 @@ transform.  (conventionally named, ``xform_command``).
 
 """
 import sys
+import os
 
 
 __all__ = ('load_cli', 'get_default',)
 
 
-# TODO Make transform discovery magical. In other words, load the transform
-#      modules through scanning rather than reading a constant.
-TRANSFORMS = (
-    'xslt',
-    )
+# Transform discovery is magical. Anything that ends in .py and doesn't start
+# with __ will be expected to be a transformation, taking a cnxml document as
+# its first param, and returning a transformed doc
+
+here=os.path.dirname(__file__)
+TRANSFORMS = [f[:-3] for f in os.listdir(here) if f.endswith('.py') and not f.startswith('__')]
+
 # TODO Look this up via setuptools entry-point so that it only needs to be
 #      changed at the distribution level on say release or tag.
-DEFAULT_TRANSFORM = TRANSFORMS[0]
+DEFAULT_TRANSFORM = 'download'
 
 
 def _import_attr_n_module(module_name, attr):

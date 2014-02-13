@@ -1,17 +1,12 @@
-#r=requests.get('http://qa.cnx.org/Members/Crouton/listFolderContents', params={'spec':'Module Editor'}, auth=('Crouton','ODeath'))
-#clist=r.content[1:-1].split(', ')
-#clist[0][1:-1].split('/')[-1]
-#r=requests.get('http://qa.cnx.org/Members/Crouton/m13519/index.cnxml', auth=('Crouton','ODeath'))
-#r.status_code
-#r.ok
-#r=requests.post('http://qa.cnx.org/Members/Crouton/m13519/content_checkout', auth=('Crouton','ODeath'))
-#r
-#data=MultipartEncoder(fields={'importFile':('index.cnxml','some text'),'format':'plain','submit':'Import','form.submitted':'1','came_from':'module_text'})
-#r=requests.post('http://qa.cnx.org/Members/Crouton/m13519/module_import_form', data=data, auth=('Crouton','ODeath'))
-#data=MultipartEncoder(fields={'importFile':('index.cnxml','some other text'),'format':'plain','submit':'Import','form.submitted':'1','came_from':'module_text'})
-#r=requests.post('https://qa.cnx.org/Members/Crouton/m13519/module_import_form', data=data.to_string(), auth=('Crouton','ODeath'), headers={'Content-Type': data.content_type})
-#r
-#r.history
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# ###
+# Copyright (c) 2014, Rice University
+# This software is subject to the provisions of the GNU Affero General
+# Public License version 3 (AGPLv3).
+# See LICENCE.txt for details.
+# ###
+"""Models to wrap the legacy workgroup and provide behaviors"""
 
 from requests_toolbelt import MultipartEncoder
 import requests
@@ -37,15 +32,22 @@ class Module:
             
     def save(self,cnxml):
         """Push new cnxml to RME"""
-        data = MultipartEncoder(fields={'importFile':('index.cnxml', cnxml, 'text/xml'),
+        data = MultipartEncoder(fields={'importFile':('index.cnxml', cnxml.decode('utf-8')),
             'format':'plain', 'submit':'Import', 'form.submitted':'1',
             'came_from':'module_text'})
-        data.to_string()
-        r = requests.post('%s/module_import_form' % self.url, data=data, auth=self.auth)
+        r = requests.post('%s/module_import_form' % self.url, data = data.to_string(), 
+            auth = self.auth, headers = {'Content-Type': data.content_type})
 
-    def publish(self):
+    def publish(self, message=None):
         """Publish module"""
-        pass
+        print "publishing %s: %s" % (self.moduleid, message), 
+        data = {'message':message,'form.button.publish':'Publish','form.submitted':'1'}
+        r = requests.post('%s/module_publish_description' % self.url, data = data, auth = self.auth)
+        if not r.history or 'Item%20Published' not in r.history[-1].url:
+                print "failed: see %s" % (self.url+'/module_publish')
+        else:
+                print "success"
+
 
 class Workgroup:
     """Class that wraps a workgroup to provide access to module editors"""
@@ -57,9 +59,9 @@ class Workgroup:
         self.mod_ids = None
 
         if self.workgroupid:
-            self.url = 'https://%s/GroupWorkspaces/%s' % (host,self.workgroupid)
+            self.url = 'https://%s/GroupWorkspaces/%s' % (host, self.workgroupid)
         else:
-            self.url = 'https://%s/Members/%s' % (host,self.auth[0])
+            self.url = 'https://%s/Members/%s' % (host, self.auth[0])
             
 
     def modules(self, update=False):

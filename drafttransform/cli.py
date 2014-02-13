@@ -27,15 +27,16 @@ def main(argv=None):
     parser.add_argument('-a', '--auth', required = True,
                         help = "authentication info [userid:password]")
     parser.add_argument('-w', '--workgroup',
-                        help = "Id of workgroup")
-    parser.add_argument('-p', '--publish',
-                        action = 'store_true',
+                        help = "Id of workgroup: defaults to user's private workgroup")
+    parser.add_argument('-p', '--publish', metavar = 'message',
                         help = "Publish after transform")
-    parser.add_argument('-d', '--dry-run',
+    parser.add_argument('-P', '--publish_only', metavar = 'message',
+                        help = "Publish all drafts, no download or transform")
+    parser.add_argument('-u', '--upload',
                         action = "store_true",
-                        help="Don't upload")
-    parser.add_argument('--save-dir',
-                        help = "Directory to save transformed output to, as <moduleid>.cnxml")
+                        help="Upload transformed doc back to draft")
+    parser.add_argument('-s', '--save-dir',
+                        help = "Directory to save transformed output to, as <moduleid>.xml")
     subparsers = parser.add_subparsers(help = "transform step")
     transforms.load_cli(subparsers)
 
@@ -44,7 +45,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     
-    save_dir = args.save_dir
+    save_dir = args.save_dir or args.save_dir_d
 
     cmmd = args.cmmd
     # walk workgroup, look over and retrieve cnxmls, transform, then save and
@@ -52,17 +53,22 @@ def main(argv=None):
     workgroup = Workgroup(**vars(args))
     print workgroup.url
     for mod in workgroup.modules():
-        cnxml = mod.cnxml()
-        new_cnxml = cmmd(cnxml,**vars(args))
-        import pdb; pdb.set_trace()
-        print '%s: %s %s' % (mod.moduleid, len(cnxml), len(new_cnxml))
-        if save_dir:
-            with open(os.path.join(save_dir,'%s.xml' % (mod.moduleid)), 'w') as m:
-                m.write(new_cnxml)
-        if not (args.dry_run):
-            mod.save(new_cnxml)
-        if (args.publish):
-            mod.publish()
+        if args.publish_only:
+            mod.publish(args.publish_only)
+        else:
+            cnxml = mod.cnxml()
+            new_cnxml = cmmd(cnxml,**vars(args))
+            if cnxml and new_cnxml:
+                print '%s: %s %s' % (mod.moduleid,len(cnxml),len(new_cnxml))
+                if save_dir:
+                    if not os.path.exists(save_dir):
+                        os.mkdir(save_dir)
+                    with open(os.path.join(save_dir,'%s.xml' % (mod.moduleid)), 'w') as m:
+                        m.write(new_cnxml)
+                if args.upload:
+                    mod.save(new_cnxml)
+                if args.publish:
+                    mod.publish(args.publish)
 
     
     return # cmmd(**vars(args))

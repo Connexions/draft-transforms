@@ -11,7 +11,7 @@ tests_require = (
 extras_require = {
     'test': tests_require,
     }
-description = "An in-workgroup cnxml tranform utility"
+description = "An in-workgroup Connexions batch operations/tranform utility"
 
 
 setup(
