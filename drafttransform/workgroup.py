@@ -57,11 +57,15 @@ class Workgroup:
         self.auth = tuple(auth.split(':'))
         self.workgroupid = workgroup
         self.mod_ids = None
+        if host.startswith('127.') or host == 'localhost':
+            protocol = 'http'
+        else:
+            protocol = 'https'
 
         if self.workgroupid:
-            self.url = 'https://%s/GroupWorkspaces/%s' % (host, self.workgroupid)
+            self.url = '%s://%s/GroupWorkspaces/%s' % (protocol, host, self.workgroupid)
         else:
-            self.url = 'https://%s/Members/%s' % (host, self.auth[0])
+            self.url = '%s://%s/Members/%s' % (protocol, host, self.auth[0])
             
 
     def modules(self, update=False):
