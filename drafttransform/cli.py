@@ -12,7 +12,7 @@ import sys
 import argparse
 
 from . import transforms
-from workgroup import Workgroup
+from workgroup import Workgroup, listWorkspaces
 
 DESCRIPTION = __doc__
 DEFAULT_HOST = "qa.cnx.org"
@@ -27,7 +27,10 @@ def main(argv=None):
     parser.add_argument('-a', '--auth', required = True,
                         help = "authentication info [userid:password]")
     parser.add_argument('-w', '--workgroup',
-                        help = "Id of workgroup: defaults to user's private workgroup")
+                        help = "Id of workgroup: defaults to user's private workspace")
+    parser.add_argument('-l', '--list',
+                        action = "store_true",
+                        help = "List all workspaces")
     parser.add_argument('-p', '--publish', metavar = 'message',
                         help = "Publish after transform")
     parser.add_argument('-P', '--publish_only', metavar = 'message',
@@ -40,16 +43,24 @@ def main(argv=None):
     subparsers = parser.add_subparsers(help = "transform step")
     transforms.load_cli(subparsers)
 
-    if len(sys.argv) < 2 or sys.argv[0].startswith('-'):
-        sys.argv.insert(1, transforms.get_default_cli_command_name())
+    if len(sys.argv) < 5 or sys.argv[0].startswith('-'):
+        sys.argv.append(transforms.get_default_cli_command_name())
+        print sys.argv
     args = parser.parse_args(argv)
-
     
-    save_dir = args.save_dir or args.save_dir_d
+    if hasattr(args,'save_dir') and args.save_dir or hasattr(args,'save_dir_d') and args.save_dir_d:
+        save_dir = args.save_dir or args.save_dir_d 
+    else:
+        save_dir = None
 
     cmmd = args.cmmd
+
+    if args.list:
+        print '\n'.join(listWorkspaces(**vars(args)))
+        return
     # walk workgroup, look over and retrieve cnxmls, transform, then save and
     # optionally publish.
+
     workgroup = Workgroup(**vars(args))
     print workgroup.url
     for mod in workgroup.modules():

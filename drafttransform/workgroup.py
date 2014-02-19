@@ -10,6 +10,10 @@
 
 from requests_toolbelt import MultipartEncoder
 import requests
+import re
+import textwrap
+
+
 
 class Module:
     """Class to provide methods to retrieve and save content from RME"""
@@ -79,3 +83,23 @@ class Workgroup:
             yield Module(modid,self)
 
 
+def listWorkspaces(host=None, auth=None, **kwargs):
+    """List all the users Workspaces"""
+    if host.startswith('127.') or host == 'localhost':
+        protocol = 'http'
+    else:
+        protocol = 'https'
+    
+    auth = tuple(auth.split(':'))
+
+    workspaces  = ['%s\tPersonal Workspace (default)' % (auth[0])]
+
+    r = requests.get('%s://%s/getWorkspaces' % (protocol,host), auth=auth )
+    if r:
+        folder_regex = re.compile("'folder': <[^>]*>,")
+        workgroups = eval(folder_regex.sub('',r.content))
+        for wg in workgroups:
+            prefix='%(id)s\t%(title)s  - ' % wg
+            workspaces.append(textwrap.fill(wg['description'], initial_indent=prefix, subsequent_indent=' '*len(prefix)))
+    return workspaces
+    
