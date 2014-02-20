@@ -16,7 +16,11 @@ def cli_command(cnxml,**kwargs):
     with open(kwargs['xslt']) as xf:
         xsl=etree.parse(xf).getroot()
         transform=etree.XSLT(xsl)
-        xml=etree.XML(cnxml)
+        try:
+            xml=etree.XML(cnxml)
+        except (etree.XMLSyntaxError, ValueError):
+            print "bad XML"
+            return None
     return unicode(transform(xml)).encode('utf-8')
 
 
