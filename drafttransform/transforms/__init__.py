@@ -36,7 +36,7 @@ TRANSFORMS = [f[:-3] for f in os.listdir(here) if f.endswith('.py') and not f.st
 
 # TODO Look this up via setuptools entry-point so that it only needs to be
 #      changed at the distribution level on say release or tag.
-DEFAULT_TRANSFORM = 'download'
+DEFAULT_TRANSFORM = 'null'
 
 
 def _import_attr_n_module(module_name, attr):
